@@ -1,0 +1,170 @@
+class Mentor:
+    def __init__(self, name, surname):
+        self.name = name
+        self.surname = surname
+        self.courses_attached = []
+
+
+class Lecturer(Mentor):  # Lecturer наследуем класс от Mentor
+    def __init__(self, name, surname):
+        Mentor.__init__(self, name, surname)  # Вызов базовый конструктор и определение класса
+        self.grades = {}  # Список оценок от студентов
+
+    def __lt__(self, other):
+        a = self.average_rating()
+        b = other.average_rating()
+        return a < b
+
+    def __str__(self):
+        return "Имя: {0}\nФамилия: {1}\nСредняя оценка за лекции: {2}".format(self.name, self.surname,
+                                                                              self.average_rating())
+
+    def average_rating(self):  # Среднее значение всех оценок
+        summ_list = 0
+        count_list = 0
+        for val in self.grades.values():
+            summ_list += sum(val)
+            count_list += len(val)
+        if count_list:
+            average_list = summ_list / count_list
+            return average_list
+        else:
+            return None
+
+    @staticmethod
+    def average_for_lectures(lectures_list, course):
+        summ_list = 0
+        count_list = 0
+        for lecture in lectures_list:
+            if isinstance(lecture, Lecturer) and course in lecture.grades:
+                summ_list += sum(lecture.grades[course])
+                count_list += len(lecture.grades[course])
+        if count_list:
+            average_list = summ_list / count_list
+            return average_list
+        else:
+            return None
+
+
+class Reviewer(Mentor):  # Reviewer наследуем класс от Mentor
+    def __init__(self, name, surname):
+        Mentor.__init__(self, name, surname)  # Вызов базовый конструктор и определение класса
+
+    def __str__(self):
+        return "Имя: {0}\nФамилия: {1}".format(self.name, self.surname)
+
+    def rate_hw(self, student, course, grade):  # Теперь этот метод - особенность только Reviewer
+        if isinstance(student, Student) and course in self.courses_attached and course in student.courses_in_progress:
+            if course in student.grades:
+                student.grades[course] += [grade]
+            else:
+                student.grades[course] = [grade]
+        else:
+            return 'Ошибка'
+
+
+class Student:
+    def __init__(self, name, surname, gender):
+        self.name = name
+        self.surname = surname
+        self.gender = gender
+        self.finished_courses = []
+        self.courses_in_progress = []
+        self.grades = {}
+
+    def __str__(self):
+        courses_in_progress_string = ", ".join(self.courses_in_progress)
+        courses_finished_courses_string = ", ".join(self.finished_courses)
+        return "Имя: {0}\nФамилия: {1}\nСредняя оценка за лекции: {2}\nКурсы в процессе изучения: {3}\nЗавершенные " \
+               "курсы: {4}".format(self.name, self.surname,
+                                   self.average_rating(), courses_in_progress_string, courses_finished_courses_string)
+
+    def __lt__(self, other):
+        a = self.average_rating()
+        b = other.average_rating()
+        return a < b
+
+    def give_grade(self, lecturer, course, grade):
+        # Если лектор - правильный экземпляр класса
+        # курс в процессе изучения у студента,
+        # а также лектор закреплен за этим курсом
+        # то выставляем оценки лектору
+        if isinstance(lecturer,
+                      Lecturer) and course in self.courses_in_progress and course in lecturer.courses_attached:
+            if course in lecturer.grades:
+                lecturer.grades[course] += [grade]
+            else:
+                lecturer.grades[course] = [grade]
+        else:
+            return 'Ошибка'
+
+    def average_rating(self):  # Среднее значение всех оценок
+        summ_list = 0
+        count_list = 0
+        for val in self.grades.values():
+            summ_list += sum(val)
+            count_list += len(val)
+        if count_list:
+            average_list = summ_list / count_list
+            return average_list
+        else:
+            return None
+
+    @staticmethod
+    def average_for_students(students_list, course):
+        summ_list = 0
+        count_list = 0
+        # нужно проссумировать оценки по всем студентам в рамках курса
+        for student in students_list:
+            # если дали правильного студента, и есть список оценок для конкретного курса, тогда суммируем
+            if isinstance(student, Student) and course in student.grades:
+                summ_list += sum(student.grades[course])
+                count_list += len(student.grades[course])
+        if count_list:
+            average_list = summ_list / count_list
+            return average_list
+        else:
+            return None
+
+
+best_student = Student('Ruoy', 'Eman', 'your_gender')
+best_student.courses_in_progress += ['Python']
+best_student.courses_in_progress += ['C++']
+best_student.finished_courses += ['Введение в программирование']
+
+best_student_2 = Student('Ruoy', 'Eman', 'your_gender')
+best_student_2.courses_in_progress += ['Python']
+best_student_2.courses_in_progress += ['C++']
+best_student_2.finished_courses += ['Введение в программирование']
+
+cool_lector = Lecturer('Bob', 'Tail')
+cool_lector.courses_attached += ['Python']
+cool_lector.courses_attached += ['C++']
+cool_lector_2 = Lecturer('Bob', 'Tail')
+cool_lector_2.courses_attached += ['Python']
+cool_lector_2.courses_attached += ['C++']
+best_student.give_grade(cool_lector, 'C++', 4)
+best_student.give_grade(cool_lector_2, 'C++', 5)
+
+best_reviewer = Reviewer('GooD', 'Name')
+best_reviewer.courses_attached += ['Python']
+best_reviewer.courses_attached += ['C++']
+best_reviewer.rate_hw(best_student, 'Python', 5)
+best_reviewer.rate_hw(best_student, 'Python', 3)
+best_reviewer.rate_hw(best_student_2, 'C++', 5)
+best_reviewer.rate_hw(best_student_2, 'Python', 5)
+best_reviewer.rate_hw(best_student_2, 'Python', 5)
+best_reviewer.rate_hw(best_student_2, 'C++', 5)
+
+print(cool_lector)
+print(best_reviewer)
+print(best_student)
+
+print(best_student_2 > best_student)
+print(cool_lector_2 > cool_lector)
+
+list_stud = [best_student, best_student_2]
+print(Student.average_for_students(list_stud, 'C++'))
+
+list_lec = [cool_lector, cool_lector_2]
+print(Lecturer.average_for_lectures(list_lec, 'C++'))
